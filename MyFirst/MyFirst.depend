@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1587911906 source:c:\users\antoine\documents\github\cpp\myfirst\main.cpp
+	<iostream>
+
+1587911888 source:c:\users\antoine\documents\github\cpp\myfirst\add.cpp
+	<iostream>
+
+1587912348 source:c:\users\antoine\documents\github\cpp\myfirst\name.cpp
+	<iostream>
+
