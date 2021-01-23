@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cstring>
 #include "board.h"
 
 template <class T>
@@ -35,20 +34,7 @@ void Board::create()
     size_y = user_y;
 
     board_cells_display = init_board<char>({},size_x,size_y);
-    board_cells_state = init_board<bool>(false,size_x,size_y);
-
-
-//    board_cells_display = new char* [size_x] ;
-//    for (int i=0; i<size_x; i++)
-//    {
-//        board_cells_display[i] = new char [size_y];
-//        for (int j=0; j<size_y; j++)
-//        {
-//            board_cells_display[i][j] = {};
-//        }
-//    }
-
-//    board_cells_display[size_x][size_y] = {};
+    board_cells_state = init_board<int>(0,size_x,size_y);
 
 }
 
@@ -58,23 +44,27 @@ void Board::initialize(t_user_input user_input)
     for (int i=0; i<user_input.init_cell_number; i++)
     {
         board_cells_display[user_input.init_cells_positions[0][i]][user_input.init_cells_positions[1][i]] = 'O';
+        board_cells_state[user_input.init_cells_positions[0][i]][user_input.init_cells_positions[1][i]] = 1;
     }
 
 }
 
 void Board::update(int cycle_number)
 {
-    std::cout << "Console cleared." << std::endl;
-
-    for (int x=1; x<size_x; x++)
+    for (int x=1; x<size_x-1; x++)
     {
-        for (int y=1; y<size_y; y++)
+        for (int y=1; y<size_y-1; y++)
         {
-
-
             // Analyze cells around
-            //board_cells_state[x-1][y-1] board_cells_state[x-1][y] board_cells_state[x-1][y+1];
-            //std::cout<<buff_str<<std::endl;
+            int E,S,next_E;
+
+            E = board_cells_state[x][y];
+
+            S = board_cells_state[x-1][y-1] + board_cells_state[x-1][y] + board_cells_state[x-1][y+1] + board_cells_state[x+1][y-1] + board_cells_state[x+1][y] + board_cells_state[x+1][y+1] + board_cells_state[x][y-1] + board_cells_state[x][y+1];
+
+            (S==3 || (E==1 && S==2)) ? next_E=1 : next_E=0;
+//            std::cout << "next_E" << next_E << std::endl;
+            board_cells_state[x][y] = next_E;
 
         }
 
@@ -87,13 +77,15 @@ void Board::update(int cycle_number)
 
 void Board::display()
 {
+    char display_char;
     std::cout << std::string(size_y+2,'-') << std::endl;
     for (int i=0 ; i<size_x ; i++)
     {
         std::cout << '|' ;
         for (int j=0 ; j<size_y ; j++)
         {
-            std::cout << board_cells_display[i][j];
+            board_cells_state[i][j]==1 ? display_char='O' : display_char=' ';
+            std::cout << display_char;
         }
         std::cout << '|' << std::endl;
     }

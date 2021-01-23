@@ -9,7 +9,7 @@ struct t_user_input
 class Board {
     int size_x, size_y;
     char ** board_cells_display;
-    bool ** board_cells_state;
+    int ** board_cells_state;
 public:
     void create();
     void initialize(t_user_input);

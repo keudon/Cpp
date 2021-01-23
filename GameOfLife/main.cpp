@@ -49,9 +49,9 @@ int main()
 
     for(int i=0; i<user_struct.cycle_number; i++)
     {
-        the_board.update(i);
-        Sleep(500);
         the_board.display();
+        Sleep(500);
+        the_board.update(i);
 
     }
 
