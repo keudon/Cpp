@@ -1,13 +1,6 @@
 #include <iostream>
+#include "board.h"
 
-// Type Definitions
-struct t_user_input
-{
-    int cycle_number;
-    int init_cell_number;
-    int** init_cells_positions;
-
-};
 int board_display(t_user_input);
 
 // Function Definition
@@ -44,16 +37,21 @@ t_user_input input()
 // Main
 int main()
 {
+    Board the_board;
     // Declarations
     t_user_input user_struct;
 
     user_struct = input();
 
 
-    for(int i=0;i<user_struct.cycle_number;i++) {
+    for(int i=0; i<user_struct.cycle_number; i++)
+    {
         //board_update();
-        board_display(user_struct);
     }
+    the_board.create();
+    the_board.initialize(user_struct);
+    the_board.display();
+
 
     return 0;
 }
