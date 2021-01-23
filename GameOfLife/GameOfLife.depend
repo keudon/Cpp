@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1611427034 source:c:\users\antoine\documents\github\cpp\gameoflife\main.cpp
+1611436435 source:c:\users\antoine\documents\github\cpp\gameoflife\main.cpp
 	<iostream>
+	<windows.h>
 	"board.h"
 
 1606596329 source:c:\users\antoine\documents\github\cpp\gameoflife\test.cpp
@@ -13,9 +14,9 @@
 1610903140 source:c:\users\antoine\documents\github\cpp\gameoflife\get_user_input.cpp
 	<iostream>
 
-1611427402 source:c:\users\antoine\documents\github\cpp\gameoflife\board.cpp
+1611435879 source:c:\users\antoine\documents\github\cpp\gameoflife\board.cpp
 	<iostream>
 	"board.h"
 
-1611427129 c:\users\antoine\documents\github\cpp\gameoflife\board.h
+1611435781 c:\users\antoine\documents\github\cpp\gameoflife\board.h
 

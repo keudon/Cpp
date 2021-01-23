@@ -13,6 +13,6 @@ class Board {
 public:
     void create();
     void initialize(t_user_input);
-    void update();
+    void update(int);
     void display();
 };

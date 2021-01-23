@@ -1,4 +1,5 @@
 #include <iostream>
+#include <windows.h>
 #include "board.h"
 
 int board_display(t_user_input);
@@ -43,14 +44,17 @@ int main()
 
     user_struct = input();
 
+    the_board.create();
+    the_board.initialize(user_struct);
 
     for(int i=0; i<user_struct.cycle_number; i++)
     {
-        //board_update();
+        the_board.update(i);
+        Sleep(500);
+        the_board.display();
+
     }
-    the_board.create();
-    the_board.initialize(user_struct);
-    the_board.display();
+
 
 
     return 0;
