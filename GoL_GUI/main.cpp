@@ -72,6 +72,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     /* Make the window visible on the screen */
     ShowWindow (hwnd, nCmdShow);
 
+
+
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage (&messages, NULL, 0, 0))
     {
@@ -88,17 +90,16 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
-/*  This function is called by the Windows function DispatchMessage()  */
 
 HDC hdc; // Handle to Device Context
 PAINTSTRUCT ps; // Paint Data
 LPRECT prect;
 POINT mypt;
-bool is_vert;
-int taille[2]= {10,50};
-static RECT myrect;
-int i = 1;
-int j = 3;
+bool is_vert,rect_is_modified;
+int cell_size=10;
+int taille[2]= {10,10};
+//RECT my_array_of_rect[taille[0]][taille[1]];
+static RECT my_array_of_rect[10][10];
 
 //typedef int myint;
 //array<myint> array_rect;
@@ -112,12 +113,13 @@ int j = 3;
 //RECT ** board_cells_rect;
 //board_cells_rect = init_board<RECT>(myinitrect,10,5);
 
+/*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    RECT my_array_of_rect[taille[0]][taille[1]];
     HBRUSH my_red_brush, my_green_brush;
     my_red_brush = CreateSolidBrush(RGB(255,0,0));
     my_green_brush = CreateSolidBrush(RGB(0,255,0));
+    int m,n;
 
     switch (message)                  /* handle the messages */
     {
@@ -147,23 +149,43 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.x = (LONG) LOWORD(lParam);
         mypt.y = (LONG) HIWORD(lParam);
 
-        if (PtInRect(&myrect,mypt))
-        {
-            hdc = GetDC(hwnd);
-//            static RECT mynewrect;
-            if (is_vert)
-            {
-//            SetRect(&mynewrect,150,150,200,200);
-                FillRect(hdc,&myrect,my_red_brush);
-            }
-            else
-            {
-                FillRect(hdc,&myrect,my_green_brush);
-            }
-            is_vert = !is_vert;
-            ReleaseDC(hwnd,hdc);
+//        std::cout << "mypt.x=" << mypt.x << std::endl;
+//        std::cout << "mypt.y=" << mypt.y << std::endl;
 
-        }
+        rect_is_modified = false;
+
+        for (int i=0; i<taille[0]; i++)
+            for (int j=0; j<taille[1]; j++)
+            {
+
+                if (!rect_is_modified && PtInRect(&my_array_of_rect[i][j],mypt))
+                {
+//                    std::cout << "left" << my_array_of_rect[i][j].left << std::endl;
+//                    std::cout << "top" << my_array_of_rect[i][j].top << std::endl;
+//                    std::cout << "right" << my_array_of_rect[i][j].right << std::endl;
+//                    std::cout << "bottom" << my_array_of_rect[i][j].bottom << std::endl;
+//
+                    std::cout << "found" << std::endl;
+//                    std::cout << "i=" << i << std::endl;
+//                    std::cout << "j=" << j << std::endl;
+
+
+                    hdc = GetDC(hwnd);
+                    if (is_vert)
+                    {
+                        FillRect(hdc,&my_array_of_rect[i][j],my_red_brush);
+                    }
+                    else
+                    {
+                        FillRect(hdc,&my_array_of_rect[i][j],my_green_brush);
+                    }
+                    is_vert = !is_vert;
+                    ReleaseDC(hwnd,hdc);
+                    rect_is_modified = true;
+
+                }
+            }
+
 
         return 0;
 
@@ -173,9 +195,21 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         HDC hdc;
         hdc = BeginPaint(hwnd,&ps);
-        SetRect(&myrect,0,0,150,150);
         SelectObject(hdc,my_green_brush);
-        FillRect(hdc,&myrect,my_green_brush);
+        m=0;
+        for (int i=0; i<taille[0]; i++)
+        {
+            n=0;
+            for (int j=0; j<taille[1]; j++)
+            {
+                SetRect(&my_array_of_rect[i][j],n,m,n+cell_size,m+cell_size);
+                n=n+cell_size+1;
+                FillRect(hdc,&my_array_of_rect[i][j],my_green_brush);
+            }
+            m=m+cell_size+1;
+
+        }
+
         EndPaint(hwnd,&ps);
         is_vert = true;
         return 0;
