@@ -8,6 +8,8 @@
 #include <windows.h>
 #include <iostream>
 #include <gdiplus.h>
+#include "board.h"
+
 using namespace Gdiplus;
 
 /*  Declare Windows procedure  */
@@ -86,17 +88,36 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
-void repaint_square(HWND hwnd,LPRECT pmyrect,PAINTSTRUCT ps,HBRUSH the_brush);
-
 /*  This function is called by the Windows function DispatchMessage()  */
+
 HDC hdc; // Handle to Device Context
 PAINTSTRUCT ps; // Paint Data
-static RECT myrect;
 LPRECT prect;
 POINT mypt;
+bool is_vert;
+int taille[2]= {10,50};
+static RECT myrect;
+int i = 1;
+int j = 3;
+
+//typedef int myint;
+//array<myint> array_rect;
+//struct mytypestruct{
+//    double name;
+//    int mabite;
+//};
+//struct mytypestruct mystruct[5];
+
+//RECT myinitrect;
+//RECT ** board_cells_rect;
+//board_cells_rect = init_board<RECT>(myinitrect,10,5);
 
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    RECT my_array_of_rect[taille[0]][taille[1]];
+    HBRUSH my_red_brush, my_green_brush;
+    my_red_brush = CreateSolidBrush(RGB(255,0,0));
+    my_green_brush = CreateSolidBrush(RGB(0,255,0));
 
     switch (message)                  /* handle the messages */
     {
@@ -128,36 +149,35 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         if (PtInRect(&myrect,mypt))
         {
-            std::cout << "In RECT !" << std::endl;
-
             hdc = GetDC(hwnd);
-            static RECT mynewrect;
-            HBRUSH my_red_brush;
-            my_red_brush = CreateSolidBrush(RGB(255,0,0));
-            SetRect(&mynewrect,150,150,200,200);
-            FillRect(hdc,&mynewrect,my_red_brush);
-            DeleteObject(my_red_brush);
+//            static RECT mynewrect;
+            if (is_vert)
+            {
+//            SetRect(&mynewrect,150,150,200,200);
+                FillRect(hdc,&myrect,my_red_brush);
+            }
+            else
+            {
+                FillRect(hdc,&myrect,my_green_brush);
+            }
+            is_vert = !is_vert;
             ReleaseDC(hwnd,hdc);
 
-        }
-        else
-        {
-            std::cout << "NOT in RECT :( " << std::endl;
         }
 
         return 0;
 
     case WM_PAINT:
 
+    case WM_CREATE:
+
         HDC hdc;
-        HBRUSH my_green_brush;
-        my_green_brush = CreateSolidBrush(RGB(0,255,0));
         hdc = BeginPaint(hwnd,&ps);
         SetRect(&myrect,0,0,150,150);
         SelectObject(hdc,my_green_brush);
         FillRect(hdc,&myrect,my_green_brush);
-        DeleteObject(my_green_brush);
         EndPaint(hwnd,&ps);
+        is_vert = true;
         return 0;
 
     default:                      /* for messages that we don't deal with */
@@ -167,22 +187,59 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     return 0;
 }
 
-void repaint_square(HWND hwnd,LPRECT pmyrect,PAINTSTRUCT ps,HBRUSH the_brush)
+
+// Function Definition
+t_user_input input()
 {
+    t_user_input new_input;
 
+    std::cout << "Duration of Life ? (in number of cycles)" << std::endl;
+    std::cin >> new_input.cycle_number;
 
-//    hdc = GetDC(hwnd);
-//    Rectangle(hdc,pmyrect->left,pmyrect->top,pmyrect->right,pmyrect->bottom);
-
-//    Rectangle(hdc,pmyrect->left,pmyrect->top,pmyrect->right,pmyrect->bottom);
-//    if(test==0) {
-
-//    } else {
-//        SetRect(pmyrect,150,150,150,200);
-//    }
-
-//    ReleaseDC(hwnd,hdc);
+    std::cout << "Initial cell(s) number ?" << std::endl;
+    std::cin >> new_input.init_cell_number;
 
 
 
+    new_input.init_cells_positions = new int* [2]; // Rows
+
+    new_input.init_cells_positions[0] = new int [new_input.init_cell_number]; // 1st line : X
+    new_input.init_cells_positions[1] = new int [new_input.init_cell_number]; // 2nd line : Y
+
+    for (int i=0; i<new_input.init_cell_number; i++)
+    {
+        std::cout << "Cell " << i << " x position : " << std::endl;
+        std::cin >> new_input.init_cells_positions[0][i];
+
+        std::cout << "Cell " << i << " y position : " << std::endl;
+        std::cin >> new_input.init_cells_positions[1][i];
+
+    }
+
+    return new_input;
+}
+
+// Main
+int main_copy()
+{
+    Board the_board;
+    // Declarations
+    t_user_input user_struct;
+
+    user_struct = input();
+
+    the_board.create();
+    the_board.initialize(user_struct);
+
+    for(int i=0; i<user_struct.cycle_number; i++)
+    {
+        the_board.display();
+        Sleep(500);
+        the_board.update(i);
+
+    }
+
+
+
+    return 0;
 }
