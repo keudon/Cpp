@@ -18,12 +18,20 @@ LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 /*  Make the class name into a global variable  */
 TCHAR szClassName[ ] = _T("CodeBlocksWindowsApp");
 
+struct Cell {
+    RECT ** geometry;
+    bool ** alive;
+};
+
 struct Plateau
 {
     bool ready;
     int size_x, size_y;
-    RECT ** cells;
+    Cell * p_cell;
+
 };
+
+int cell_size=10;
 
 int WINAPI WinMain (HINSTANCE hThisInstance,
                     HINSTANCE hPrevInstance,
@@ -63,6 +71,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
 
     Plateau *p_plateau = new Plateau;
+    p_plateau->p_cell = new Cell;
 
     /* The class is registered, let's create the program*/
     hwnd = CreateWindowEx (
@@ -99,25 +108,6 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
-
-bool is_vert,rect_is_modified;
-int cell_size=10;
-int taille[2]= {10,10};
-static RECT my_array_of_rect[10][10];
-//Board the_board;
-
-//typedef int myint;
-//array<myint> array_rect;
-//struct mytypestruct{
-//    double name;
-//    int mabite;
-//};
-//struct mytypestruct mystruct[5];
-
-//RECT myinitrect;
-//RECT ** board_cells_rect;
-//board_cells_rect = init_board<RECT>(myinitrect,10,5);
-
 /*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -127,7 +117,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     my_red_brush = CreateSolidBrush(RGB(255,0,0));
     my_green_brush = CreateSolidBrush(RGB(0,255,0));
     int m,n;
-    LPRECT final_p_rect;
     Plateau *p_plateau;
     LONG_PTR ptr;
     CREATESTRUCT *pCreate;
@@ -147,11 +136,13 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         p_plateau->ready= false;
 
-        p_plateau->cells = new RECT * [p_plateau->size_x];
+        p_plateau->p_cell->geometry = new RECT * [p_plateau->size_x];
+        p_plateau->p_cell->alive = new bool * [p_plateau->size_x];
 
         for (int i=0;i<p_plateau->size_x;i++)
         {
-            p_plateau->cells[i] = new RECT [p_plateau->size_y];
+            p_plateau->p_cell->geometry[i] = new RECT [p_plateau->size_y];
+            p_plateau->p_cell->alive[i] = new bool [p_plateau->size_y];
         }
     }
     else
@@ -188,27 +179,24 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.x = (LONG) LOWORD(lParam);
         mypt.y = (LONG) HIWORD(lParam);
 
-        rect_is_modified = false;
-
-        for (int i=0; i<taille[0]; i++)
-            for (int j=0; j<taille[1]; j++)
+        for (int i=0; i<p_plateau->size_x; i++)
+            for (int j=0; j<p_plateau->size_y; j++)
             {
 
-                if (!rect_is_modified && PtInRect(&my_array_of_rect[i][j],mypt))
+                if (PtInRect(&(p_plateau->p_cell->geometry)[i][j],mypt))
                 {
 
                     hdc = GetDC(hwnd);
-                    if (is_vert)
+                    if (p_plateau->p_cell->alive[i][j] == true)
                     {
-                        FillRect(hdc,&my_array_of_rect[i][j],my_red_brush);
+                        FillRect(hdc,&(p_plateau->p_cell->geometry)[i][j],my_red_brush);
                     }
                     else
                     {
-                        FillRect(hdc,&my_array_of_rect[i][j],my_green_brush);
+                        FillRect(hdc,&(p_plateau->p_cell->geometry)[i][j],my_green_brush);
                     }
-                    is_vert = !is_vert;
+                    p_plateau->p_cell->alive[i][j] = !p_plateau->p_cell->alive[i][j];
                     ReleaseDC(hwnd,hdc);
-                    rect_is_modified = true;
 
                 }
             }
@@ -224,15 +212,16 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         hdc = BeginPaint(hwnd,&ps);
         SelectObject(hdc,my_green_brush);
         m=0;
+
         for (int i=0; i<p_plateau->size_x; i++)
         {
             n=0;
             for (int j=0; j<p_plateau->size_y; j++)
             {
-                SetRect(&(p_plateau->cells[i][j]),n,m,n+cell_size,m+cell_size);
+                p_plateau->p_cell->alive[i][j] = true;
+                SetRect(&(p_plateau->p_cell->geometry[i][j]),n,m,n+cell_size,m+cell_size);
                 n=n+cell_size+1;
-                FillRect(hdc,&(p_plateau->cells[i][j]),my_green_brush);
-                p_plateau->cells[i][j]
+                FillRect(hdc,&(p_plateau->p_cell->geometry[i][j]),my_green_brush);
 
             }
             m=m+cell_size+1;
@@ -240,7 +229,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         }
 
         EndPaint(hwnd,&ps);
-        is_vert = true;
         return 0;
 
     default:                      /* for messages that we don't deal with */
