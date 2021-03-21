@@ -12,17 +12,38 @@
 
 using namespace Gdiplus;
 
+//class CELL_BOARD
+//{
+//public:
+//    int n_cells;
+//    bool cell_is_modified=false;
+//private:
+//    static LRESULT CALLBACK WindowProcedure( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+//    static const char * m_pszClassName;
+//    HWND m_hWnd;
+//};
+
 /*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 
 /*  Make the class name into a global variable  */
 TCHAR szClassName[ ] = _T("CodeBlocksWindowsApp");
 
+struct Plateau
+{
+    bool ready;
+    int size_x, size_y;
+    RECT ** cells;
+};
+
 int WINAPI WinMain (HINSTANCE hThisInstance,
                     HINSTANCE hPrevInstance,
                     LPSTR lpszArgument,
                     int nCmdShow)
 {
+//    CELL_BOARD the_cell;
+//    the_cell.n_cells = 10;
+
     HWND hwnd;               /* This is the handle for our window */
     MSG messages;            /* Here messages to the application are saved */
     WNDCLASSEX wincl;        /* Data structure for the windowclass */
@@ -49,11 +70,20 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     /* Use Windows's default colour as the background of the window */
     wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND+1;
 
+
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx (&wincl))
         return 0;
 
     /* The class is registered, let's create the program*/
+//    CELL_BOARD * pcellboard = new CELL_BOARD;
+//    RECT my_array_of_rect[10][10];
+//    RECT my_rect;
+//    LPRECT p_to_my_rect;
+//    p_to_my_rect=&my_rect;
+
+    Plateau *p_plateau = new Plateau;
+
     hwnd = CreateWindowEx (
                0,                   /* Extended possibilites for variation */
                szClassName,         /* Classname */
@@ -66,13 +96,11 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                HWND_DESKTOP,        /* The window is a child-window to desktop */
                NULL,                /* No menu */
                hThisInstance,       /* Program Instance handler */
-               NULL                 /* No Window Creation data */
+               p_plateau            /* Application Data */
            );
 
     /* Make the window visible on the screen */
     ShowWindow (hwnd, nCmdShow);
-
-
 
     /* Run the message loop. It will run until GetMessage() returns 0 */
     while (GetMessage (&messages, NULL, 0, 0))
@@ -91,15 +119,13 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 }
 
 
-HDC hdc; // Handle to Device Context
-PAINTSTRUCT ps; // Paint Data
-LPRECT prect;
-POINT mypt;
 bool is_vert,rect_is_modified;
 int cell_size=10;
 int taille[2]= {10,10};
 //RECT my_array_of_rect[taille[0]][taille[1]];
+//std::cout << "WHERE AM I ?" << std::endl;
 static RECT my_array_of_rect[10][10];
+//Board the_board;
 
 //typedef int myint;
 //array<myint> array_rect;
@@ -116,10 +142,59 @@ static RECT my_array_of_rect[10][10];
 /*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    HDC hdc; // Handle to Device Context
+    PAINTSTRUCT ps; // Paint Data
     HBRUSH my_red_brush, my_green_brush;
     my_red_brush = CreateSolidBrush(RGB(255,0,0));
     my_green_brush = CreateSolidBrush(RGB(0,255,0));
     int m,n;
+    LPRECT final_p_rect;
+    Plateau *p_plateau;
+    LONG_PTR ptr;
+    CREATESTRUCT *pCreate;
+    POINT mypt;
+
+
+    if (message == WM_CREATE)
+    {
+        pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
+        p_plateau = reinterpret_cast<Plateau*>(pCreate->lpCreateParams);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)p_plateau);
+        std::cout << "Board size x ?" << std::endl;
+        std::cin >> p_plateau->size_x;
+        std::cout << "Board size y ?" << std::endl;
+        std::cin >> p_plateau->size_y;
+        p_plateau->ready= false;
+
+        p_plateau->cells = new RECT * [p_plateau->size_x];
+
+        for (int i=0;i<p_plateau->size_x;i++)
+        {
+            p_plateau->cells[i] = new RECT [p_plateau->size_y];
+        }
+
+
+
+//        tmp
+//        p_plateau->p_cells = new RECT [p_plateau->size_x][p_plateau->size_y];
+//        int taille[2]= {p_plateau->size_x, p_plateau->size_y};
+//        RECT my_array_of_rect[p_plateau->size_x][p_plateau->size_y];
+
+    }
+    else
+    {
+        ptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        p_plateau = reinterpret_cast<Plateau*>(ptr);
+
+//        if (pState->is_green == 1) {
+//                std::cout << "pState->is_green: true" << std::endl;
+//        }
+//        else
+//        {
+//                std::cout << "pState->is_green: false" << std::endl;
+//        }
+
+    }
 
     switch (message)                  /* handle the messages */
     {
@@ -144,6 +219,14 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 
     case WM_LBUTTONDOWN:
+//        toto = (*pState).is_green;
+//        std::cout << "(*pState).is_green = " << toto << std::endl;
+
+//        LONG_PTR ptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
+//        StateInfo *pState = reinterpret_cast<StateInfo*>(ptr);
+
+//        std::cout << "pState : " << pState << std::endl;
+
 //        std::cout << "WM_LBUTTONDOWN" << std::endl;
 
         mypt.x = (LONG) LOWORD(lParam);
@@ -193,22 +276,37 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
     case WM_CREATE:
 
+
+
+//        CREATESTRUCT * pcs;
+//        pcs = reinterpret_cast<CREATESTRUCT*>(lParam);
+
+//        final_p_rect = reinterpret_cast<LPRECT>(pcs->lpCreateParams);
+//        SetWindowLongPtrA(hwnd,GWLP_USERDATA,(LONG_PTR)final_p_rect);
+
         HDC hdc;
         hdc = BeginPaint(hwnd,&ps);
         SelectObject(hdc,my_green_brush);
         m=0;
-        for (int i=0; i<taille[0]; i++)
+        for (int i=0; i<p_plateau->size_x; i++)
         {
             n=0;
-            for (int j=0; j<taille[1]; j++)
+            for (int j=0; j<p_plateau->size_y; j++)
             {
-                SetRect(&my_array_of_rect[i][j],n,m,n+cell_size,m+cell_size);
+                SetRect(&(p_plateau->cells[i][j]),n,m,n+cell_size,m+cell_size);
                 n=n+cell_size+1;
-                FillRect(hdc,&my_array_of_rect[i][j],my_green_brush);
+                FillRect(hdc,&(p_plateau->cells[i][j]),my_green_brush);
+                p_plateau->cells[i][j]
+
             }
             m=m+cell_size+1;
 
         }
+
+//        std::cout << "final_p_rect->bottom = " << final_p_rect->bottom << std::endl;
+//        SetRect(final_p_rect,50,50,100,100);
+//        FillRect(hdc,final_p_rect,my_green_brush);
+
 
         EndPaint(hwnd,&ps);
         is_vert = true;
