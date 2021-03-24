@@ -69,7 +69,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     if (!RegisterClassEx (&wincl))
         return 0;
 
-
+    /* Initialization of Application Data */
     Plateau *p_plateau = new Plateau;
     p_plateau->p_cell = new Cell;
 
@@ -120,8 +120,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     Plateau *p_plateau;
     LONG_PTR ptr;
     CREATESTRUCT *pCreate;
-    POINT mypt;
-
+    POINT mousse_point;
 
     if (message == WM_CREATE)
     {
@@ -160,30 +159,25 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         break;
 
     case WM_CLOSE:
-//        if (MessageBox(hwnd,_T("REALLY QUIT?"),_T("DFQ IS THAT"),MB_OKCANCEL) == IDOK)
-//        {
-        DestroyWindow(hwnd);
-//        }
-//        else
-//        {
-        return 0;
-//        }
-
-//        case WM_LBUTTONUP:
-//            std::cout << "Up clicked !" << std::endl;
-//            SetRect(&myrect,0,0,100,100);
-
+        if (MessageBox(hwnd,_T("Really quit the GAME OF LIFE ?"),_T("Warning"),MB_OKCANCEL) == IDOK)
+        {
+            DestroyWindow(hwnd);
+        }
+        else
+        {
+            return 0;
+        }
 
     case WM_LBUTTONDOWN:
 
-        mypt.x = (LONG) LOWORD(lParam);
-        mypt.y = (LONG) HIWORD(lParam);
+        mousse_point.x = (LONG) LOWORD(lParam);
+        mousse_point.y = (LONG) HIWORD(lParam);
 
         for (int i=0; i<p_plateau->size_x; i++)
             for (int j=0; j<p_plateau->size_y; j++)
             {
 
-                if (PtInRect(&(p_plateau->p_cell->geometry)[i][j],mypt))
+                if (PtInRect(&(p_plateau->p_cell->geometry)[i][j],mousse_point))
                 {
 
                     hdc = GetDC(hwnd);
