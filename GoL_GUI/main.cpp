@@ -3,6 +3,8 @@
 #elif defined(_UNICODE) && !defined(UNICODE)
 #define UNICODE
 #endif
+#define WM_CONTINUE_BOARD (WM_USER + 0x0001)
+#define WM_STOP_BOARD (WM_USER + 0x0002)
 
 #include <tchar.h>
 #include <windows.h>
@@ -18,20 +20,13 @@ LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 /*  Make the class name into a global variable  */
 TCHAR szClassName[ ] = _T("CodeBlocksWindowsApp");
 
-struct Cell {
-    RECT ** geometry;
-    bool ** alive;
-};
-
-struct Plateau
-{
-    bool ready;
-    int size_x, size_y;
-    Cell * p_cell;
-
-};
-
 int cell_size=10;
+struct thread_struct {
+    MSG msg;
+    Board * p_to_board;
+};
+
+DWORD WINAPI ThreadFun1(LPVOID lpParam);
 
 int WINAPI WinMain (HINSTANCE hThisInstance,
                     HINSTANCE hPrevInstance,
@@ -70,8 +65,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         return 0;
 
 
-    Plateau *p_plateau = new Plateau;
-    p_plateau->p_cell = new Cell;
+    Board *p_board = new Board;
+    p_board->p_cell = new Cell;
 
     /* The class is registered, let's create the program*/
     hwnd = CreateWindowEx (
@@ -86,7 +81,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                HWND_DESKTOP,        /* The window is a child-window to desktop */
                NULL,                /* No menu */
                hThisInstance,       /* Program Instance handler */
-               p_plateau            /* Application Data */
+               p_board            /* Application Data */
            );
 
     /* Make the window visible on the screen */
@@ -99,6 +94,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         TranslateMessage(&messages);
         /* Send message to WindowProcedure */
         DispatchMessage(&messages);
+
     }
 
     /* End GDI+ */
@@ -106,6 +102,50 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
     /* The program return-value is 0 - The value that PostQuitMessage() gave */
     return messages.wParam;
+}
+
+DWORD WINAPI ThreadFun1(LPVOID lpParam)
+{
+    thread_struct *p_thread_struct;
+    PeekMessage(&(p_thread_struct->msg), NULL, WM_USER, WM_USER, PM_NOREMOVE);
+    std::cout << "Entering thread" << std::endl;
+    p_thread_struct = (thread_struct*)lpParam;
+    std::cout << "p_thread_struct retrieved" << std::endl;
+
+//    p_my_board=(p_my_board)lpParam;
+
+    while (1)
+    {
+        std::cout << "Thread Running" << std::endl;
+        Sleep(1000);
+        if (PeekMessage (&(p_thread_struct->msg), NULL, 0, 0, PM_NOREMOVE) != 0)
+        {
+            std::cout << "Thread Message Recieved !!!!!!!!!!" << std::endl;
+        } else
+        {
+            std::cout << "Nothing" << std::endl;
+        }
+
+    }
+
+//    while (GetMessage (&(p_thread_struct->msg), NULL, 0, 0) != 0)
+//    {
+//        std::cout << "Thread Message Recieved" << std::endl;
+//    }
+//    else
+//    {
+//        std::cout << "Nothing" << std::endl;
+//    }
+
+//    while (p_thread_struct->p_to_board->game_on== true)
+//    {
+//        std::cout << "game_on " << std::endl;
+//    }
+
+
+//    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE)
+        std::cout << "END of thread ?" << std::endl;
+
 }
 
 /*  This function is called by the Windows function DispatchMessage()  */
@@ -117,38 +157,60 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     my_red_brush = CreateSolidBrush(RGB(255,0,0));
     my_green_brush = CreateSolidBrush(RGB(0,255,0));
     int m,n;
-    Plateau *p_plateau;
+    Board *p_board;
     LONG_PTR ptr;
     CREATESTRUCT *pCreate;
     POINT mypt;
+    DWORD threadID;
+    HANDLE hThread;
+    HANDLE hEvent;
 
 
     if (message == WM_CREATE)
     {
         pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
-        p_plateau = reinterpret_cast<Plateau*>(pCreate->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)p_plateau);
+        p_board = reinterpret_cast<Board*>(pCreate->lpCreateParams);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)p_board);
 
         std::cout << "Board size x ?" << std::endl;
-        std::cin >> p_plateau->size_x;
+        std::cin >> p_board->size_x;
         std::cout << "Board size y ?" << std::endl;
-        std::cin >> p_plateau->size_y;
+        std::cin >> p_board->size_y;
 
-        p_plateau->ready= false;
+        p_board->game_on = false;
 
-        p_plateau->p_cell->geometry = new RECT * [p_plateau->size_x];
-        p_plateau->p_cell->alive = new bool * [p_plateau->size_x];
+        p_board->p_cell->geometry = new RECT * [p_board->size_x];
+        p_board->p_cell->alive = new bool * [p_board->size_x];
 
-        for (int i=0;i<p_plateau->size_x;i++)
+        for (int i=0;i<p_board->size_x;i++)
         {
-            p_plateau->p_cell->geometry[i] = new RECT [p_plateau->size_y];
-            p_plateau->p_cell->alive[i] = new bool [p_plateau->size_y];
+            p_board->p_cell->geometry[i] = new RECT [p_board->size_y];
+            p_board->p_cell->alive[i] = new bool [p_board->size_y];
         }
+
+        hEvent = CreateEvent(NULL,true,true,_T("Keudons_Event_Object"));
+
+        hThread = CreateThread(NULL, // security attributes ( default if NULL )
+                               0, // stack SIZE default if 0
+                               ThreadFun1, // Start Address
+                               p_board, // input data
+                               0, // creational flag ( start if  0 )
+                               &threadID); // thread ID
+
+        p_board->game_thread_id = threadID;
+
+        std::cout << "threadID = " << threadID << std::endl;
+
+
+        WaitForSingleObject(hEvent,500);
+
+        SetEvent(hEvent);
+
     }
     else
     {
         ptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        p_plateau = reinterpret_cast<Plateau*>(ptr);
+        p_board = reinterpret_cast<Board*>(ptr);
 
     }
 
@@ -179,23 +241,23 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.x = (LONG) LOWORD(lParam);
         mypt.y = (LONG) HIWORD(lParam);
 
-        for (int i=0; i<p_plateau->size_x; i++)
-            for (int j=0; j<p_plateau->size_y; j++)
+        for (int i=0; i<p_board->size_x; i++)
+            for (int j=0; j<p_board->size_y; j++)
             {
 
-                if (PtInRect(&(p_plateau->p_cell->geometry)[i][j],mypt))
+                if (PtInRect(&(p_board->p_cell->geometry)[i][j],mypt))
                 {
 
                     hdc = GetDC(hwnd);
-                    if (p_plateau->p_cell->alive[i][j] == true)
+                    if (p_board->p_cell->alive[i][j] == true)
                     {
-                        FillRect(hdc,&(p_plateau->p_cell->geometry)[i][j],my_red_brush);
+                        FillRect(hdc,&(p_board->p_cell->geometry)[i][j],my_red_brush);
                     }
                     else
                     {
-                        FillRect(hdc,&(p_plateau->p_cell->geometry)[i][j],my_green_brush);
+                        FillRect(hdc,&(p_board->p_cell->geometry)[i][j],my_green_brush);
                     }
-                    p_plateau->p_cell->alive[i][j] = !p_plateau->p_cell->alive[i][j];
+                    p_board->p_cell->alive[i][j] = !p_board->p_cell->alive[i][j];
                     ReleaseDC(hwnd,hdc);
 
                 }
@@ -213,15 +275,15 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         SelectObject(hdc,my_green_brush);
         m=0;
 
-        for (int i=0; i<p_plateau->size_x; i++)
+        for (int i=0; i<p_board->size_x; i++)
         {
             n=0;
-            for (int j=0; j<p_plateau->size_y; j++)
+            for (int j=0; j<p_board->size_y; j++)
             {
-                p_plateau->p_cell->alive[i][j] = true;
-                SetRect(&(p_plateau->p_cell->geometry[i][j]),n,m,n+cell_size,m+cell_size);
+                p_board->p_cell->alive[i][j] = true;
+                SetRect(&(p_board->p_cell->geometry[i][j]),n,m,n+cell_size,m+cell_size);
                 n=n+cell_size+1;
-                FillRect(hdc,&(p_plateau->p_cell->geometry[i][j]),my_green_brush);
+                FillRect(hdc,&(p_board->p_cell->geometry[i][j]),my_green_brush);
 
             }
             m=m+cell_size+1;
@@ -231,66 +293,94 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         EndPaint(hwnd,&ps);
         return 0;
 
+    case WM_KEYUP:
+
+        if (wParam == VK_SPACE)
+        {
+            p_board->game_on =! p_board->game_on;
+
+//            hThread = CreateThread(NULL, // security attributes ( default if NULL )
+//                            0, // stack SIZE default if 0
+//                            ThreadFun1, // Start Address
+//                            p_board, // input data
+//                            0, // creational flag ( start if  0 )
+//                            &threadID); // thread ID
+
+//            ResumeThread(threadID);
+
+            std::cout << "SPACE entered !" << std::endl;
+            std::cout << "threadID = " << p_board->game_thread_id << std::endl;
+            PostThreadMessage(p_board->game_thread_id,WM_KEYUP,0,0);
+            std::cout << "WM_KEYUP posted to thread" << std::endl;
+
+        }
+
+        return 0;
+
+    case WM_CONTINUE_BOARD:
+
+
     default:                      /* for messages that we don't deal with */
         return DefWindowProc (hwnd, message, wParam, lParam);
     }
 
     return 0;
+
 }
 
 
-// Function Definition
-t_user_input input()
-{
-    t_user_input new_input;
-
-    std::cout << "Duration of Life ? (in number of cycles)" << std::endl;
-    std::cin >> new_input.cycle_number;
-
-    std::cout << "Initial cell(s) number ?" << std::endl;
-    std::cin >> new_input.init_cell_number;
-
-
-
-    new_input.init_cells_positions = new int* [2]; // Rows
-
-    new_input.init_cells_positions[0] = new int [new_input.init_cell_number]; // 1st line : X
-    new_input.init_cells_positions[1] = new int [new_input.init_cell_number]; // 2nd line : Y
-
-    for (int i=0; i<new_input.init_cell_number; i++)
-    {
-        std::cout << "Cell " << i << " x position : " << std::endl;
-        std::cin >> new_input.init_cells_positions[0][i];
-
-        std::cout << "Cell " << i << " y position : " << std::endl;
-        std::cin >> new_input.init_cells_positions[1][i];
-
-    }
-
-    return new_input;
-}
-
-// Main
-int main_copy()
-{
-    Board the_board;
-    // Declarations
-    t_user_input user_struct;
-
-    user_struct = input();
-
-    the_board.create();
-    the_board.initialize(user_struct);
-
-    for(int i=0; i<user_struct.cycle_number; i++)
-    {
-        the_board.display();
-        Sleep(500);
-        the_board.update(i);
-
-    }
-
-
-
-    return 0;
-}
+//// Function Definition
+//t_user_input input()
+//{
+//    t_user_input new_input;
+//
+//    std::cout << "Duration of Life ? (in number of cycles)" << std::endl;
+//    std::cin >> new_input.cycle_number;
+//
+//    std::cout << "Initial cell(s) number ?" << std::endl;
+//    std::cin >> new_input.init_cell_number;
+//
+//
+//
+//    new_input.init_cells_positions = new int* [2]; // Rows
+//
+//    new_input.init_cells_positions[0] = new int [new_input.init_cell_number]; // 1st line : X
+//    new_input.init_cells_positions[1] = new int [new_input.init_cell_number]; // 2nd line : Y
+//
+//    for (int i=0; i<new_input.init_cell_number; i++)
+//    {
+//        std::cout << "Cell " << i << " x position : " << std::endl;
+//        std::cin >> new_input.init_cells_positions[0][i];
+//
+//        std::cout << "Cell " << i << " y position : " << std::endl;
+//        std::cin >> new_input.init_cells_positions[1][i];
+//
+//    }
+//
+//    return new_input;
+//}
+//
+//// Main
+//int main_copy()
+//{
+//    Board the_board;
+//    // Declarations
+//    t_user_input user_struct;
+//
+//    user_struct = input();
+//
+//    the_board.create();
+//    the_board.initialize(user_struct);
+//
+//    for(int i=0; i<user_struct.cycle_number; i++)
+//    {
+//        the_board.display();
+//        Sleep(500);
+//        the_board.update(i);
+//
+//    }
+//
+//
+//
+//    return 0;
+//}

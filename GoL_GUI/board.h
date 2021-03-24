@@ -1,3 +1,5 @@
+#include <windows.h>
+
 struct t_user_input
 {
     int cycle_number;
@@ -6,13 +8,21 @@ struct t_user_input
 
 };
 
+struct Cell {
+    RECT ** geometry;
+    bool ** alive;
+};
+
 class Board {
-    int size_x, size_y;
-    char ** board_cells_display;
-    int ** board_cells_state;
 public:
-    void create();
-    void initialize(t_user_input);
-    void update(int);
-    void display();
+    bool game_on;
+    Cell * p_cell;
+    int size_x, size_y;
+    DWORD game_thread_id;
+//    char ** board_cells_display;
+//    int ** board_cells_state;
+//    void create();
+//    void initialize(t_user_input);
+//    void update(int);
+//    void display();
 };
