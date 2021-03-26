@@ -3,8 +3,9 @@
 #elif defined(_UNICODE) && !defined(UNICODE)
 #define UNICODE
 #endif
-#define WM_CONTINUE_BOARD (WM_USER + 0x0001)
-#define WM_STOP_BOARD (WM_USER + 0x0002)
+#define WM_START_BOARD (WM_USER + 0x0001)
+#define WM_CONTINUE_BOARD (WM_USER + 0x0002)
+#define WM_STOP_BOARD (WM_USER + 0x0003)
 
 #include <tchar.h>
 #include <windows.h>
@@ -21,12 +22,12 @@ LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[ ] = _T("CodeBlocksWindowsApp");
 
 int cell_size=10;
-struct thread_struct {
-    MSG msg;
-    Board * p_to_board;
-};
+//struct thread_struct {
+//    MSG msg;
+//    Board * p_to_board;
+//};
 
-DWORD WINAPI ThreadFun1(LPVOID lpParam);
+//DWORD WINAPI ThreadFun1(HWND,LPVOID);
 
 int WINAPI WinMain (HINSTANCE hThisInstance,
                     HINSTANCE hPrevInstance,
@@ -67,6 +68,12 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
     Board *p_board = new Board;
     p_board->p_cell = new Cell;
+    LONG_PTR ptr;
+    HBRUSH my_red_brush, my_green_brush;
+    my_red_brush = CreateSolidBrush(RGB(255,0,0));
+    my_green_brush = CreateSolidBrush(RGB(0,255,0));
+    HDC hdc; // Handle to Device Context
+
 
     /* The class is registered, let's create the program*/
     hwnd = CreateWindowEx (
@@ -88,13 +95,65 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     ShowWindow (hwnd, nCmdShow);
 
     /* Run the message loop. It will run until GetMessage() returns 0 */
-    while (GetMessage (&messages, NULL, 0, 0))
+    while (GetMessage (&messages, NULL, 0, 0) > 0)
     {
         /* Translate virtual-key messages into character messages */
         TranslateMessage(&messages);
+
         /* Send message to WindowProcedure */
         DispatchMessage(&messages);
 
+        if (messages.message == WM_KEYDOWN && messages.wParam == VK_SPACE)
+        {
+            p_board->game_on = !p_board->game_on;
+
+            std::cout << "GAME ON !!" << std::endl;
+
+        }
+
+        while (p_board->game_on)
+        {
+
+                std::cout << "updating ..." << std::endl;
+
+            for (int x=1; x<p_board->size_x-1; x++)
+            {
+                for (int y=1; y<p_board->size_y-1; y++)
+                {
+                    // Analyze cells around
+                    int E,S,next_E;
+
+                    E = p_board->p_cell->alive[x][y];
+
+                    S = p_board->p_cell->alive[x-1][y-1] + p_board->p_cell->alive[x-1][y] + p_board->p_cell->alive[x-1][y+1] + p_board->p_cell->alive[x+1][y-1] + p_board->p_cell->alive[x+1][y] + p_board->p_cell->alive[x+1][y+1] + p_board->p_cell->alive[x][y-1] + p_board->p_cell->alive[x][y+1];
+
+                    (S==3 || (E==1 && S==2)) ? next_E=1 : next_E=0;
+                    p_board->p_cell->alive[x][y] = next_E;
+
+                    hdc = GetDC(hwnd);
+                    if (p_board->p_cell->alive[x][y] == true)
+                    {
+                        FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_red_brush);
+                    }
+                    else
+                    {
+                        FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_green_brush);
+                    }
+                    ReleaseDC(hwnd,hdc);
+
+                }
+
+            }
+
+                Sleep(750);
+                if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) && messages.wParam == VK_SPACE && messages.message == WM_KEYDOWN)
+                {
+                    std::cout << "Game Stopped" << std::endl;
+                    p_board->game_on = false;
+                }
+
+
+        }
     }
 
     /* End GDI+ */
@@ -102,50 +161,6 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
     /* The program return-value is 0 - The value that PostQuitMessage() gave */
     return messages.wParam;
-}
-
-DWORD WINAPI ThreadFun1(LPVOID lpParam)
-{
-    thread_struct *p_thread_struct;
-    PeekMessage(&(p_thread_struct->msg), NULL, WM_USER, WM_USER, PM_NOREMOVE);
-    std::cout << "Entering thread" << std::endl;
-    p_thread_struct = (thread_struct*)lpParam;
-    std::cout << "p_thread_struct retrieved" << std::endl;
-
-//    p_my_board=(p_my_board)lpParam;
-
-    while (1)
-    {
-        std::cout << "Thread Running" << std::endl;
-        Sleep(1000);
-        if (PeekMessage (&(p_thread_struct->msg), NULL, 0, 0, PM_NOREMOVE) != 0)
-        {
-            std::cout << "Thread Message Recieved !!!!!!!!!!" << std::endl;
-        } else
-        {
-            std::cout << "Nothing" << std::endl;
-        }
-
-    }
-
-//    while (GetMessage (&(p_thread_struct->msg), NULL, 0, 0) != 0)
-//    {
-//        std::cout << "Thread Message Recieved" << std::endl;
-//    }
-//    else
-//    {
-//        std::cout << "Nothing" << std::endl;
-//    }
-
-//    while (p_thread_struct->p_to_board->game_on== true)
-//    {
-//        std::cout << "game_on " << std::endl;
-//    }
-
-
-//    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE)
-        std::cout << "END of thread ?" << std::endl;
-
 }
 
 /*  This function is called by the Windows function DispatchMessage()  */
@@ -161,10 +176,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     LONG_PTR ptr;
     CREATESTRUCT *pCreate;
     POINT mypt;
-    DWORD threadID;
-    HANDLE hThread;
-    HANDLE hEvent;
-
 
     if (message == WM_CREATE)
     {
@@ -187,24 +198,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
             p_board->p_cell->geometry[i] = new RECT [p_board->size_y];
             p_board->p_cell->alive[i] = new bool [p_board->size_y];
         }
-
-        hEvent = CreateEvent(NULL,true,true,_T("Keudons_Event_Object"));
-
-        hThread = CreateThread(NULL, // security attributes ( default if NULL )
-                               0, // stack SIZE default if 0
-                               ThreadFun1, // Start Address
-                               p_board, // input data
-                               0, // creational flag ( start if  0 )
-                               &threadID); // thread ID
-
-        p_board->game_thread_id = threadID;
-
-        std::cout << "threadID = " << threadID << std::endl;
-
-
-        WaitForSingleObject(hEvent,500);
-
-        SetEvent(hEvent);
 
     }
     else
@@ -230,10 +223,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 //        {
         return 0;
 //        }
-
-//        case WM_LBUTTONUP:
-//            std::cout << "Up clicked !" << std::endl;
-//            SetRect(&myrect,0,0,100,100);
 
 
     case WM_LBUTTONDOWN:
@@ -292,33 +281,6 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         EndPaint(hwnd,&ps);
         return 0;
-
-    case WM_KEYUP:
-
-        if (wParam == VK_SPACE)
-        {
-            p_board->game_on =! p_board->game_on;
-
-//            hThread = CreateThread(NULL, // security attributes ( default if NULL )
-//                            0, // stack SIZE default if 0
-//                            ThreadFun1, // Start Address
-//                            p_board, // input data
-//                            0, // creational flag ( start if  0 )
-//                            &threadID); // thread ID
-
-//            ResumeThread(threadID);
-
-            std::cout << "SPACE entered !" << std::endl;
-            std::cout << "threadID = " << p_board->game_thread_id << std::endl;
-            PostThreadMessage(p_board->game_thread_id,WM_KEYUP,0,0);
-            std::cout << "WM_KEYUP posted to thread" << std::endl;
-
-        }
-
-        return 0;
-
-    case WM_CONTINUE_BOARD:
-
 
     default:                      /* for messages that we don't deal with */
         return DefWindowProc (hwnd, message, wParam, lParam);
@@ -383,4 +345,67 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 //
 //
 //    return 0;
+//}
+
+
+//DWORD WINAPI ThreadFun1(HWND hwnd,LPVOID lpParam)
+//{
+//    thread_struct *p_thread_struct;
+//    PeekMessage(&(p_thread_struct->msg), NULL, WM_USER, WM_USER, PM_NOREMOVE);
+//    std::cout << "Entering thread" << std::endl;
+//    p_thread_struct = (thread_struct*)lpParam;
+//
+//    while (1){
+//
+//        std::cout << "Ca tourne" << std::endl;
+//        Sleep(1000);
+//        p_thread_struct->p_to_board->p_cell->alive[1][1] = !p_thread_struct->p_to_board->p_cell->alive[1][1];
+//
+//    }
+
+//        if (PeekMessage (&(p_thread_struct->msg), NULL, 0, 0, PM_REMOVE) != 0)
+//        {
+//
+//            TranslateMessage(&(p_thread_struct->msg));
+//            std::cout << "p_thread_struct->msg : " << p_thread_struct->msg.message << std::endl;
+//
+//        }
+
+
+
+
+
+//    p_my_board=(p_my_board)lpParam;
+
+//    while (p_thread_struct->p_to_board->game_on == true)
+//    {
+//        std::cout << "Thread Running" << std::endl;
+//        Sleep(1000);
+//        if (PeekMessage (&(p_thread_struct->msg), NULL, 0, 0, PM_NOREMOVE) != 0)
+//        {
+//            std::cout << "Thread Message Recieved !!!!!!!!!!" << std::endl;
+//        } else
+//        {
+//            std::cout << "Nothing" << std::endl;
+//        }
+//
+//    }
+
+//    while (GetMessage (&(p_thread_struct->msg), NULL, 0, 0) != 0)
+//    {
+//        std::cout << "Thread Message Recieved" << std::endl;
+//    }
+//    else
+//    {
+//        std::cout << "Nothing" << std::endl;
+//    }
+
+//    while (p_thread_struct->p_to_board->game_on== true)
+//    {
+//        std::cout << "game_on " << std::endl;
+//    }
+
+
+//    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE)
+
 //}

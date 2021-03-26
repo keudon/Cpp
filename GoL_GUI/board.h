@@ -18,7 +18,6 @@ public:
     bool game_on;
     Cell * p_cell;
     int size_x, size_y;
-    DWORD game_thread_id;
 //    char ** board_cells_display;
 //    int ** board_cells_state;
 //    void create();

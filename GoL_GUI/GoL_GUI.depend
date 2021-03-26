@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1616628466 source:c:\users\antoine\documents\github\cpp\gol_gui\main.cpp
+1616796588 source:c:\users\antoine\documents\github\cpp\gol_gui\main.cpp
 	<tchar.h>
 	<windows.h>
 	<iostream>
@@ -10,6 +10,6 @@
 	<iostream>
 	"board.h"
 
-1616628596 c:\users\antoine\documents\github\cpp\gol_gui\board.h
+1616705893 c:\users\antoine\documents\github\cpp\gol_gui\board.h
 	<windows.h>
 
