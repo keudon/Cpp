@@ -10,7 +10,8 @@ struct t_user_input
 
 struct Cell {
     RECT ** geometry;
-    bool ** alive;
+    int ** alive;
+    int ** alive_next_round;
 };
 
 class Board {
