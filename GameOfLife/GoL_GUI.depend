@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1628191781 source:c:\users\antoine\documents\github\cpp\gol_gui\main.cpp
+	<tchar.h>
+	<windows.h>
+	<iostream>
+	<gdiplus.h>
+	"board.h"
+
+1616620067 source:c:\users\antoine\documents\github\cpp\gol_gui\board.cpp
+	<iostream>
+	"board.h"
+
+1616885513 c:\users\antoine\documents\github\cpp\gol_gui\board.h
+	<windows.h>
+
