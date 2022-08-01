@@ -8,7 +8,8 @@ struct Cell {
 
 class Board {
 public:
-    bool game_on;
     Cell * p_cell;
-    int size_x, size_y;
+    int number_of_row, number_of_column;
+    int number_of_rounds;
+    bool game_on {false};
 };

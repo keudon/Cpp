@@ -65,12 +65,14 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     if (!RegisterClassEx (&wincl))
         return 0;
 
-
+    /* Creation of board */
     Board *p_board = new Board;
     p_board->p_cell = new Cell;
+    p_board->game_on = false;
     HBRUSH my_red_brush, my_green_brush;
     HDC hdc; // Handle to Device Context
-    int cell_alive , total_neighboors_alive , cell_alive_next_round;
+
+    int cell_alive , total_neighboors_alive , cell_alive_next_round , number_of_rounds;
 
 
     /* The class is registered, let's create the program*/
@@ -103,28 +105,32 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
         if (messages.message == WM_KEYDOWN && messages.wParam == VK_SPACE)
         {
+
             p_board->game_on = !p_board->game_on;
 
-            std::cout << "GAME ON !!" << std::endl;
+            if (p_board->game_on)
+            {
+                std::cout << "GAME ON !!" ;
+                hdc = GetDC(hwnd);
+                my_red_brush = CreateSolidBrush(RGB(255,0,0));
+                my_green_brush = CreateSolidBrush(RGB(0,255,0));
+            }
+            else
+            {
+                std::cout << "Stop.";
+                DeleteObject(my_red_brush);
+                DeleteObject(my_green_brush);
+                ReleaseDC(hwnd,hdc);
+            }
 
         }
 
         if (p_board->game_on)
         {
-
-            hdc = GetDC(hwnd);
-            my_red_brush = CreateSolidBrush(RGB(255,0,0));
-            my_green_brush = CreateSolidBrush(RGB(0,255,0));
-
-        }
-
-        while (p_board->game_on)
-        {
-
             // Compute State next round
-            for (int x=1; x<p_board->size_x-1; x++)
+            for (int x=1; x<p_board->number_of_row-1; x++)
             {
-                for (int y=1; y<p_board->size_y-1; y++)
+                for (int y=1; y<p_board->number_of_column-1; y++)
                 {
 
                     // Analyze cells around
@@ -136,15 +142,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
                     p_board->p_cell->alive_next_round[x][y] = cell_alive_next_round;
 
-                }
-            }
-
-            // Make the update
-
-            for (int x=1; x<p_board->size_x-1; x++)
-            {
-                for (int y=1; y<p_board->size_y-1; y++)
-                {
+                    // Make the update
                     if (p_board->p_cell->alive_next_round[x][y] != p_board->p_cell->alive[x][y])
                     {
                         p_board->p_cell->alive[x][y] = p_board->p_cell->alive_next_round[x][y];
@@ -155,21 +153,27 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                 }
             }
 
+            Sleep(1000);
+
+            PostMessageA(hwnd,0,NULL,NULL);
 
 
-            Sleep(500);
-
-            if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) && messages.wParam == VK_SPACE && messages.message == WM_KEYDOWN)
+            /*if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE))
             {
-                std::cout << "Game Stopped" << std::endl;
-                p_board->game_on = false;
+                if (messages.wParam == VK_SPACE && messages.message == WM_KEYDOWN)
+                {
+                    p_board->game_on = !p_board->game_on;
 
-                DeleteObject(my_red_brush);
-                DeleteObject(my_green_brush);
-
-                ReleaseDC(hwnd,hdc);
-
+                }
             }
+
+            else
+
+            {
+
+                std::cout << "MESSAGE QUEUE EMPTY ?" << std::endl;
+
+            }*/
 
 
         }
@@ -183,6 +187,9 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     return messages.wParam;
 }
 
+
+
+
 /*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -192,31 +199,31 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     int m,n;
     Board *p_board;
     LONG_PTR ptr;
-    CREATESTRUCT *pCreate;
     POINT mypt;
 
     if (message == WM_CREATE)
     {
+
+        CREATESTRUCT *pCreate;
+
         pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
         p_board = reinterpret_cast<Board*>(pCreate->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)p_board);
 
         std::cout << "Board size x ?" << std::endl;
-        std::cin >> p_board->size_x;
+        std::cin >> p_board->number_of_row;
         std::cout << "Board size y ?" << std::endl;
-        std::cin >> p_board->size_y;
+        std::cin >> p_board->number_of_column;
 
-        p_board->game_on = false;
+        p_board->p_cell->geometry         = new RECT * [p_board->number_of_row];
+        p_board->p_cell->alive            = new int * [p_board->number_of_row];
+        p_board->p_cell->alive_next_round = new int * [p_board->number_of_row];
 
-        p_board->p_cell->geometry         = new RECT * [p_board->size_x];
-        p_board->p_cell->alive            = new int * [p_board->size_x];
-        p_board->p_cell->alive_next_round = new int * [p_board->size_x];
-
-        for (int i=0;i<p_board->size_x;i++)
+        for (int i=0;i<p_board->number_of_row;i++)
         {
-            p_board->p_cell->geometry[i]         = new RECT [p_board->size_y];
-            p_board->p_cell->alive[i]            = new int [p_board->size_y];
-            p_board->p_cell->alive_next_round[i] = new int [p_board->size_x];
+            p_board->p_cell->geometry[i]         = new RECT [p_board->number_of_column];
+            p_board->p_cell->alive[i]            = new int [p_board->number_of_column];
+            p_board->p_cell->alive_next_round[i] = new int [p_board->number_of_row];
 
         }
 
@@ -227,6 +234,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         p_board = reinterpret_cast<Board*>(ptr);
 
     }
+
 
     switch (message)                  /* handle the messages */
     {
@@ -244,8 +252,8 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.x = (LONG) LOWORD(lParam);
         mypt.y = (LONG) HIWORD(lParam);
 
-        for (int i=0; i<p_board->size_x; i++)
-            for (int j=0; j<p_board->size_y; j++)
+        for (int i=0; i<p_board->number_of_row; i++)
+            for (int j=0; j<p_board->number_of_column; j++)
             {
 
                 if (PtInRect(&(p_board->p_cell->geometry)[i][j],mypt))
@@ -284,10 +292,10 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         SelectObject(hdc,my_green_brush);
         m=0;
 
-        for (int i=0; i<p_board->size_x; i++)
+        for (int i=0; i<p_board->number_of_row; i++)
         {
             n=0;
-            for (int j=0; j<p_board->size_y; j++)
+            for (int j=0; j<p_board->number_of_column; j++)
             {
                 p_board->p_cell->alive[i][j] = 0;
                 p_board->p_cell->alive_next_round[i][j] = 0;
@@ -304,7 +312,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
         return 0;
 
-    default:                      /* for messages that we don't deal with */
+    default: /* for messages that we don't deal with */
         return DefWindowProc (hwnd, message, wParam, lParam);
     }
 

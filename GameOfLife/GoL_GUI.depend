@@ -13,3 +13,17 @@
 1616885513 c:\users\antoine\documents\github\cpp\gol_gui\board.h
 	<windows.h>
 
+1656960035 source:c:\users\antoine\documents\github\cpp\gameoflife\board.cpp
+	<iostream>
+	"board.h"
+
+1659382809 c:\users\antoine\documents\github\cpp\gameoflife\board.h
+	<windows.h>
+
+1659384791 source:c:\users\antoine\documents\github\cpp\gameoflife\main.cpp
+	<tchar.h>
+	<windows.h>
+	<iostream>
+	<gdiplus.h>
+	"board.h"
+
