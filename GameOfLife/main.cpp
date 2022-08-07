@@ -103,30 +103,13 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         /* Send message to WindowProcedure */
         DispatchMessage(&messages);
 
-        if (messages.message == WM_KEYDOWN && messages.wParam == VK_SPACE)
-        {
-
-            p_board->game_on = !p_board->game_on;
-
-            if (p_board->game_on)
-            {
-                std::cout << "GAME ON !!" ;
-                hdc = GetDC(hwnd);
-                my_red_brush = CreateSolidBrush(RGB(255,0,0));
-                my_green_brush = CreateSolidBrush(RGB(0,255,0));
-            }
-            else
-            {
-                std::cout << "Stop.";
-                DeleteObject(my_red_brush);
-                DeleteObject(my_green_brush);
-                ReleaseDC(hwnd,hdc);
-            }
-
-        }
-
         if (p_board->game_on)
         {
+
+            hdc = GetDC(hwnd);
+            my_red_brush = CreateSolidBrush(RGB(255,0,0));
+            my_green_brush = CreateSolidBrush(RGB(0,255,0));
+
             // Compute State next round
             for (int x=1; x<p_board->number_of_row-1; x++)
             {
@@ -153,28 +136,16 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                 }
             }
 
-            Sleep(1000);
+            DeleteObject(my_red_brush);
+            DeleteObject(my_green_brush);
+            ReleaseDC(hwnd,hdc);
 
-            PostMessageA(hwnd,0,NULL,NULL);
+            Sleep(750);
 
-
-            /*if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE))
+            if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,NULL) == 0)
             {
-                if (messages.wParam == VK_SPACE && messages.message == WM_KEYDOWN)
-                {
-                    p_board->game_on = !p_board->game_on;
-
-                }
+                PostMessageA(hwnd,0,NULL,NULL);
             }
-
-            else
-
-            {
-
-                std::cout << "MESSAGE QUEUE EMPTY ?" << std::endl;
-
-            }*/
-
 
         }
 
@@ -253,6 +224,8 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.y = (LONG) HIWORD(lParam);
 
         for (int i=0; i<p_board->number_of_row; i++)
+        {
+
             for (int j=0; j<p_board->number_of_column; j++)
             {
 
@@ -279,8 +252,28 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
                 }
             }
 
+        }
+        return 0;
+
+
+    case WM_KEYDOWN:
+        if (wParam == VK_SPACE)
+        {
+            p_board->game_on = !p_board->game_on;
+
+            if (p_board->game_on)
+            {
+                std::cout << "GAME ON !!" << std::endl;
+            }
+            else
+            {
+                std::cout << "Stop." << std::endl;
+            }
+
+        }
 
         return 0;
+
 
     case WM_PAINT:
 
