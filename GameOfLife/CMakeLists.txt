@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_library(GDIPLUS_LIB gdiplus)
 
-set(SOURCES main.cpp)
-set(HEADERS board.h)
+set(SOURCES src/main.cpp)
+set(HEADERS src/board.h)
 
 add_executable(
   ${PROJECT_NAME}
@@ -29,6 +29,8 @@ target_include_directories(
   ${PROJECT_NAME}
   PRIVATE
   "${GDIplus_INCLUDE_DIR}"
+  src
+  test
 )
 
 # Testing suite
@@ -45,7 +47,7 @@ enable_testing()
 
 add_executable(
   GoL_test
-  test.cpp
+  test/test.cpp
 )
 
 target_link_libraries(
