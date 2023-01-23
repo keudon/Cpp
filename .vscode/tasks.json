@@ -3,13 +3,14 @@
         {
             "type": "cppbuild",
             "label": "GOL_Compiler",
-            "command": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\cpp.exe",
+            "command": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\g++.exe",
             "args": [
                 "-g",
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}.o",
-                "-Wall"
+                "-Wall",
+                "-std=c++11"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -23,7 +24,7 @@
         {
             "type": "cppbuild",
             "label": "GOL_Linker",
-            "command": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\cpp.exe",
+            "command": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\g++.exe",
             "args": [
                 "${fileDirname}/${fileBasenameNoExtension}.o",
                 "-o",
@@ -50,10 +51,30 @@
                 "GOL_Linker"
             ],
             "dependsOrder": "sequence",
+            "group": "build"
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe générer le fichier actif",
+            "command": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "detail": "Tâche générée par le débogueur."
         }
     ],
     "version": "2.0.0"
