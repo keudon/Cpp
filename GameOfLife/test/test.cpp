@@ -1,17 +1,26 @@
 #include <gtest/gtest.h>
 #include "../src/board.h"
 
-// Demonstrate some basic assertions.
+// Update_Cell
 TEST(Game_Of_Life_Test, Update_Cell_Test) {
   int cell_alive_next_round = 0;
-  int cell_alive = 1;
-  HDC hdc; // Handle to Device Context
-  HBRUSH my_red_brush, my_green_brush;
-  RECT cell_geometry;
+  int cell_alive_now = 0;  
+  int cell_status = update_cell_status(cell_alive_now,cell_alive_next_round);
+  EXPECT_EQ(cell_alive_next_round, cell_status);
 
-  int res;
+  cell_alive_next_round = 1;
+  cell_alive_now = 0;  
+  cell_status = update_cell_status(cell_alive_now,cell_alive_next_round);
+  EXPECT_EQ(cell_alive_next_round, cell_status);
 
-  res = update_cells(cell_alive_next_round,cell_alive,cell_geometry,hdc,my_red_brush,my_green_brush);
+  cell_alive_next_round = 0;
+  cell_alive_now = 1;  
+  cell_status = update_cell_status(cell_alive_now,cell_alive_next_round);
+  EXPECT_EQ(cell_alive_next_round, cell_status);
+
+  cell_alive_next_round = 1;
+  cell_alive_now = 1;  
+  cell_status = update_cell_status(cell_alive_now,cell_alive_next_round);
+  EXPECT_EQ(cell_alive_next_round, cell_status);
   
-  EXPECT_EQ(res, 0);
 }

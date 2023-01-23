@@ -1,12 +1,11 @@
 #include "board.h"
 
-int update_cells(int cell_alive_next_round,int cell_alive,RECT cell_geometry,HDC hdc,HBRUSH my_red_brush,HBRUSH my_green_brush)
+int update_cell_status(int cell_alive_now, int cell_alive_next_round)
 {
-int cell_status = cell_alive;
-if (cell_alive_next_round != cell_alive)
+int cell_status = cell_alive_now;
+if (cell_alive_next_round != cell_alive_now)
 {
     cell_status = cell_alive_next_round;
-    (cell_status) ? FillRect(hdc,&cell_geometry,my_red_brush) : FillRect(hdc,&cell_geometry,my_green_brush);
 }
 return cell_status;
 }

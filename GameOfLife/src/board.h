@@ -14,4 +14,4 @@ public:
     bool game_on {false};
 };
 
-int update_cells(int cell_alive_next_round,int cell_alive,RECT cell_geometry,HDC hdc,HBRUSH my_red_brush,HBRUSH my_green_brush);
+int update_cell_status(int cell_alive_next_round,int cell_alive);

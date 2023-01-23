@@ -126,8 +126,8 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                     p_board->p_cell->alive_next_round[x][y] = cell_alive_next_round;
 
                     // Make the update
-                    p_board->p_cell->alive[x][y] = update_cells(p_board->p_cell->alive_next_round[x][y],p_board->p_cell->alive[x][y],(p_board->p_cell->geometry)[x][y],hdc,my_red_brush,my_green_brush);
-
+                    p_board->p_cell->alive[x][y] = update_cell_status(p_board->p_cell->alive[x][y], p_board->p_cell->alive_next_round[x][y]);
+                    (p_board->p_cell->alive[x][y]) ? FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_red_brush) : FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_green_brush);
                 }
             }
 
