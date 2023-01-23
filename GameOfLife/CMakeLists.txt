@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_library(GDIPLUS_LIB gdiplus)
 
-set(SOURCES src/main.cpp)
+set(SOURCES src/main.cpp src/board.cpp)
 set(HEADERS src/board.h)
 
 add_executable(
@@ -48,11 +48,19 @@ enable_testing()
 add_executable(
   GoL_test
   test/test.cpp
+  src/board.cpp
+  ${HEADERS}
 )
 
 target_link_libraries(
   GoL_test
   GTest::gtest_main
+)
+
+target_include_directories(
+  GoL_test
+  PRIVATE
+  src
 )
 
 include(GoogleTest)
