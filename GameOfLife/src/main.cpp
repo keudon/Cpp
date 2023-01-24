@@ -116,18 +116,19 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                 for (int y=1; y<p_board->number_of_column-1; y++)
                 {
 
-                    // Analyze cells around
+                    // Compute the number of alive neighboor cells arround the cell
+                    total_neighboors_alive = scan_neighboors(p_board->p_cell->alive,x,y);
+
+                    // Predict the cell's alive status for next round
                     cell_alive = p_board->p_cell->alive[x][y];
-
-                    total_neighboors_alive = p_board->p_cell->alive[x-1][y-1] + p_board->p_cell->alive[x-1][y] + p_board->p_cell->alive[x-1][y+1] + p_board->p_cell->alive[x+1][y-1] + p_board->p_cell->alive[x+1][y] + p_board->p_cell->alive[x+1][y+1] + p_board->p_cell->alive[x][y-1] + p_board->p_cell->alive[x][y+1];
-
                     ((cell_alive==1 && (total_neighboors_alive==3 || total_neighboors_alive==2)) || (cell_alive==0 && total_neighboors_alive==3)) ? cell_alive_next_round=1 : cell_alive_next_round=0;
 
-                    p_board->p_cell->alive_next_round[x][y] = cell_alive_next_round;
-
-                    // Make the update
-                    p_board->p_cell->alive[x][y] = update_cell_status(p_board->p_cell->alive[x][y], p_board->p_cell->alive_next_round[x][y]);
+                    // Update cell's alive status
+                    p_board->p_cell->alive[x][y] = update_cell_status(p_board->p_cell->alive[x][y], cell_alive_next_round);
+                    
+                    // Update the cell's color                    
                     (p_board->p_cell->alive[x][y]) ? FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_red_brush) : FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_green_brush);
+
                 }
             }
 

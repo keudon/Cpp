@@ -15,3 +15,5 @@ public:
 };
 
 int update_cell_status(int cell_alive_next_round,int cell_alive);
+
+int scan_neighboors(int ** alive, int x, int y);
