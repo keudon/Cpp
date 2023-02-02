@@ -21,14 +21,9 @@ LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 /*  Make the class name into a global variable  */
 TCHAR szClassName[ ] = _T("CodeBlocksWindowsApp");
 
-int cell_size=10;
-//struct thread_struct {
-//    MSG msg;
-//    Board * p_to_board;
-//};
+int cell_size=10; // in pixel
 
 //DWORD WINAPI ThreadFun1(HWND,LPVOID);
-
 int WINAPI WinMain (HINSTANCE hThisInstance,
                     HINSTANCE hPrevInstance,
                     LPSTR lpszArgument,
@@ -71,9 +66,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
     p_board->game_on = false;
     HBRUSH my_red_brush, my_green_brush;
     HDC hdc; // Handle to Device Context
-
     int cell_alive , total_neighboors_alive , cell_alive_next_round , number_of_rounds;
-
 
     /* The class is registered, let's create the program*/
     hwnd = CreateWindowEx (
@@ -105,12 +98,14 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
         if (p_board->game_on)
         {
-
-            hdc = GetDC(hwnd);
+            
+            /* perhaps this could be outside the while loop. */
+            hdc = GetDC(hwnd); 
             my_red_brush = CreateSolidBrush(RGB(255,0,0));
             my_green_brush = CreateSolidBrush(RGB(0,255,0));
 
             // Compute State next round
+            /* All of the double for-loop could be within wrapper function, with just the board as input ? */
             for (int x=1; x<p_board->number_of_row-1; x++)
             {
                 for (int y=1; y<p_board->number_of_column-1; y++)
@@ -120,24 +115,31 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
                     total_neighboors_alive = scan_neighboors(p_board->p_cell->alive,x,y);
 
                     // Predict the cell's alive status for next round
-                    cell_alive = p_board->p_cell->alive[x][y];
-                    ((cell_alive==1 && (total_neighboors_alive==3 || total_neighboors_alive==2)) || (cell_alive==0 && total_neighboors_alive==3)) ? cell_alive_next_round=1 : cell_alive_next_round=0;
+                    cell_alive_next_round = predict_cells_status(total_neighboors_alive, p_board->p_cell->alive[x][y]);
 
                     // Update cell's alive status
                     p_board->p_cell->alive[x][y] = update_cell_status(p_board->p_cell->alive[x][y], cell_alive_next_round);
                     
-                    // Update the cell's color                    
+                    // Update the cell's color - maybe this could be done in a separate loop ?                  
                     (p_board->p_cell->alive[x][y]) ? FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_red_brush) : FillRect(hdc,&(p_board->p_cell->geometry)[x][y],my_green_brush);
 
                 }
             }
 
+            /* 
+            Do we really need to delete the object and release the DC ?
+            It should be tried ... 
+            */
             DeleteObject(my_red_brush);
             DeleteObject(my_green_brush);
             ReleaseDC(hwnd,hdc);
 
             Sleep(750);
 
+            /*
+            The purpose of this is to scan for a message, and if the message stack is empty, a new message is posted
+            This allows the game loop to keep runing no matter what. 
+            */
             if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,NULL) == 0)
             {
                 PostMessageA(hwnd,0,NULL,NULL);
@@ -171,6 +173,10 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
     if (message == WM_CREATE)
     {
 
+        /*
+        All of this could be in a create_board function, but beware of the many arguments
+        Also, only the board objects are instanciated, but nothing graphical is created !! 
+         */
         CREATESTRUCT *pCreate;
 
         pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
@@ -219,6 +225,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
         mypt.x = (LONG) LOWORD(lParam);
         mypt.y = (LONG) HIWORD(lParam);
 
+        /* Is this double for-loop reaaaly necessary ? DOubt it. */
         for (int i=0; i<p_board->number_of_row; i++)
         {
 
@@ -275,6 +282,10 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
     case WM_CREATE:
 
+        /*
+        Here, again a reaction to WM_CREATE message : 
+        This time we set the small rectangles, and fill them as green-dead.
+        */
         HDC hdc;
         hdc = BeginPaint(hwnd,&ps);
         my_green_brush = CreateSolidBrush(RGB(0,255,0));
@@ -296,7 +307,7 @@ LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM
             m=m+cell_size+1;
 
         }
-        DeleteObject(my_green_brush);
+        DeleteObject(my_green_brush); // Why to delete this ?
         EndPaint(hwnd,&ps);
 
         return 0;

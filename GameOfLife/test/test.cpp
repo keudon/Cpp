@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "../src/board.h"
 
-
+// Rename as Compute Board State Test
 class Update_Cell_Status_Test : public ::testing::TestWithParam<std::tuple<int, int>> {};
 
 TEST_P(Update_Cell_Status_Test, TestUpdateCellStatus) {
