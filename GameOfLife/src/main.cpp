@@ -140,9 +140,9 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
             The purpose of this is to scan for a message, and if the message stack is empty, a new message is posted
             This allows the game loop to keep runing no matter what. 
             */
-            if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,NULL) == 0)
+            if (PeekMessage(&messages,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_NOREMOVE) == 0)
             {
-                PostMessageA(hwnd,0,NULL,NULL);
+                PostMessageA(hwnd,0,0,0);
             }
 
         }
